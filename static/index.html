@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Interview Simulator</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell container-fluid p-0">
+      <div class="row g-0 min-vh-100">
+        <aside class="sidebar col-12 col-lg-3 col-xl-2 p-3 p-lg-4">
+          <div class="brand mb-4">
+            <span class="mark">AI</span>
+            <div>
+              <strong class="d-block">Interview Simulator</strong>
+            </div>
+          </div>
+          <nav class="nav nav-pills flex-column gap-2">
+            <button data-view="dashboard" class="nav-link active text-start" type="button">Dashboard</button>
+            <button data-view="resume" class="nav-link text-start" type="button">Resume</button>
+            <button data-view="interview" class="nav-link text-start" type="button">Interview Room</button>
+            <button data-view="coding" class="nav-link text-start" type="button">Coding Room</button>
+            <button data-view="jobs" class="nav-link text-start" type="button">Jobs</button>
+            <button data-view="reports" class="nav-link text-start" type="button">Reports</button>
+          </nav>
+          <button id="logoutBtn" class="btn btn-outline-light w-100 mt-4" type="button">Logout</button>
+        </aside>
+
+        <main class="col p-3 p-md-4 p-xl-5">
+          <section id="authView" class="auth-panel min-vh-100 d-flex align-items-center">
+            <div class="container">
+              <div class="row align-items-center justify-content-center g-4 g-xl-5">
+                <div class="col-12 col-lg-7 col-xl-8 auth-copy">
+                  <h1>Practice real interviews with an adaptive AI panel.</h1>
+                  <p>Technical, HR, behavioral, coding, case-study, resume-based and company-style interviews in one focused simulator.</p>
+                </div>
+                <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
+                  <form id="authForm" class="card app-card p-4">
+                    <h2 id="authTitle" class="h3 mb-3">Create account</h2>
+                    <input id="name" class="form-control" placeholder="Name" autocomplete="name" />
+                    <input id="email" class="form-control" placeholder="Email" autocomplete="email" />
+                    <input id="password" class="form-control" type="password" placeholder="Password" autocomplete="current-password" />
+                    <select id="accountRole" class="form-select">
+                      <option value="candidate">Candidate</option>
+                    </select>
+                    <button class="btn btn-accent w-100" type="submit">Continue</button>
+                    <button type="button" id="toggleAuth" class="btn btn-outline-light w-100">I already have an account</button>
+                    <p id="authError" class="error mb-0"></p>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="appView" class="hidden">
+            <header class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+              <div>
+                <h1 id="pageTitle" class="mb-1">Dashboard</h1>
+                <p id="userLine" class="text-secondary mb-0"></p>
+              </div>
+            </header>
+
+            <section id="dashboard" class="view">
+              <div class="row g-3 mb-3">
+                <div class="col-12 col-md-4">
+                  <article class="card app-card metric-card h-100 p-3">
+                    <span>Total Interviews</span>
+                    <strong id="totalInterviews">0</strong>
+                  </article>
+                </div>
+                <div class="col-12 col-md-4">
+                  <article class="card app-card metric-card h-100 p-3">
+                    <span>Average Score</span>
+                    <strong id="averageScore">0</strong>
+                  </article>
+                </div>
+                <div class="col-12 col-md-4">
+                  <article class="card app-card metric-card h-100 p-3">
+                    <span>Weak Topic</span>
+                    <strong id="weakTopic">-</strong>
+                  </article>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-12 col-xl-7">
+                  <section class="card app-card h-100 p-3 p-md-4">
+                    <h2 class="h4">Score Trend</h2>
+                    <div id="trendChart" class="bars"></div>
+                  </section>
+                </div>
+                <div class="col-12 col-xl-5">
+                  <section class="card app-card h-100 p-3 p-md-4">
+                    <h2 class="h4">Career Coach Roadmap</h2>
+                    <ul id="roadmap" class="mb-0"></ul>
+                  </section>
+                </div>
+              </div>
+            </section>
+
+            <section id="resume" class="view hidden">
+              <section class="card app-card p-3 p-md-4">
+                <h2 class="h4">Resume Upload & Analysis</h2>
+                <form id="resumeForm" class="row g-2 align-items-center">
+                  <div class="col-12 col-lg">
+                    <input type="file" id="resumeFile" class="form-control" accept=".pdf,.docx,.txt" />
+                  </div>
+                  <div class="col-12 col-lg-auto">
+                    <button class="btn btn-accent w-100" type="submit">Analyze Resume</button>
+                  </div>
+                </form>
+                <pre id="resumeOutput" class="mt-3 mb-0"></pre>
+              </section>
+            </section>
+
+            <section id="interview" class="view hidden">
+              <section class="card app-card p-3 p-md-4 mb-3">
+                <div class="row g-2">
+                  <div class="col-12 col-md-6 col-xl">
+                    <select id="roleSelect" class="form-select"></select>
+                  </div>
+                  <div class="col-12 col-md-6 col-xl">
+                    <select id="levelSelect" class="form-select">
+                      <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6 col-xl">
+                    <select id="typeSelect" class="form-select">
+                      <option>Technical</option><option>HR</option><option>Behavioral</option><option>Case Study</option><option>Panel</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6 col-xl">
+                    <select id="companySelect" class="form-select">
+                      <option>Generic</option><option>Google</option><option>Amazon</option><option>Microsoft</option><option>TCS</option><option>Infosys</option><option>Accenture</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6 col-xl-auto">
+                    <button id="startInterview" class="btn btn-accent w-100" type="button">Start</button>
+                  </div>
+                  <div class="col-12 col-md-6 col-xl-auto">
+                    <button id="finishInterview" class="btn btn-outline-light w-100" type="button">Finish & Report</button>
+                  </div>
+                </div>
+              </section>
+              <section class="interview-room">
+                <div id="chat" class="chat"></div>
+                <form id="answerForm" class="row g-2">
+                  <div class="col-12 col-lg">
+                    <textarea id="answerInput" class="form-control" placeholder="Speak or type your answer..."></textarea>
+                  </div>
+                  <div class="col-6 col-lg-auto">
+                    <button id="voiceAnswer" class="btn btn-outline-light h-100 w-100" type="button" title="Voice answer">Mic</button>
+                  </div>
+                  <div class="col-6 col-lg-auto">
+                    <button class="btn btn-accent h-100 w-100" type="submit">Send Answer</button>
+                  </div>
+                </form>
+                <p id="voiceStatus" class="text-secondary small mb-0"></p>
+              </section>
+            </section>
+
+            <section id="coding" class="view hidden">
+              <div class="row g-3">
+                <div class="col-12 col-xl-7">
+                  <section class="card app-card h-100 p-3 p-md-4">
+                    <h2 class="h4">Coding Challenge</h2>
+                    <div class="row g-2 mb-2">
+                      <div class="col-12 col-md">
+                        <select id="problemSelect" class="form-select"></select>
+                      </div>
+                      <div class="col-12 col-md-auto">
+                        <button id="nextProblem" class="btn btn-outline-light w-100" type="button">Next Challenge</button>
+                      </div>
+                    </div>
+                    <p id="problemMeta" class="challenge-meta"></p>
+                    <p id="problemPrompt" class="text-secondary"></p>
+                    <select id="languageSelect" class="form-select mb-2">
+                      <option>Python</option><option>Java</option><option>JavaScript</option><option>SQL</option>
+                    </select>
+                    <textarea id="codeEditor" class="form-control code mb-2"></textarea>
+                    <button id="runCode" class="btn btn-accent" type="button">Run Tests</button>
+                  </section>
+                </div>
+                <div class="col-12 col-xl-5">
+                  <section class="card app-card h-100 p-3 p-md-4">
+                    <h2 class="h4">Result</h2>
+                    <pre id="codeOutput" class="mb-0"></pre>
+                  </section>
+                </div>
+              </div>
+            </section>
+
+            <section id="jobs" class="view hidden">
+              <section class="card app-card p-3 p-md-4 mb-3">
+                <form id="jobSearchForm" class="row g-2 align-items-center">
+                  <div class="col-12 col-lg">
+                    <input id="jobSearchInput" class="form-control" placeholder="Search live jobs by role, skill, or keyword" />
+                  </div>
+                  <div class="col-6 col-lg-auto">
+                    <button class="btn btn-accent w-100" type="submit">Search</button>
+                  </div>
+                  <div class="col-6 col-lg-auto">
+                    <button id="suggestJobs" class="btn btn-outline-light w-100" type="button">Suggest</button>
+                  </div>
+                </form>
+                <p id="jobStatus" class="text-secondary small mb-0 mt-2"></p>
+              </section>
+              <div id="jobsList" class="jobs-grid"></div>
+            </section>
+
+            <section id="reports" class="view hidden">
+              <section class="card app-card p-3 p-md-4">
+                <h2 class="h4">Interview History</h2>
+                <div id="history"></div>
+              </section>
+            </section>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    ></script>
+    <script src="/static/app.js?v=3"></script>
+  </body>
+</html>
