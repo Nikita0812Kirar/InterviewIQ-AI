@@ -1,6 +1,5 @@
 # Fixed `app/database.py` for PostgreSQL + Supabase + Render
 
-```python
 import os
 from contextlib import contextmanager
 from pathlib import Path
