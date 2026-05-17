@@ -42,3 +42,6 @@ PORT=8000
 The app works without `OPENAI_API_KEY`; it will use a local rules-based simulator.
 
 The app creates the MySQL database `AI_interview_simulator` automatically if the configured user has permission.
+On Railway, attach a MySQL service and the app will read Railway's `MYSQLHOST`,
+`MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, or `MYSQL_URL`
+variables automatically.

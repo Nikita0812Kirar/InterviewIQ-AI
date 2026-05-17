@@ -2,17 +2,47 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
+from urllib.parse import unquote, urlparse
 
 import mysql.connector
+from mysql.connector import Error
 from mysql.connector.connection import MySQLConnection
 
 
-DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
-DB_PORT = int(os.getenv("DB_PORT", "3306"))
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "1234")
-DB_NAME = os.getenv("DB_NAME", "AI_interview_simulator")
 UPLOAD_DIR = Path("uploads")
+
+
+def _database_config(include_database: bool = True) -> dict[str, Any]:
+    """Build MySQL connection settings from local, Railway, or URL env vars."""
+    database_url = os.getenv("MYSQL_URL") or os.getenv("DATABASE_URL")
+    if database_url:
+        parsed = urlparse(database_url)
+        config: dict[str, Any] = {
+            "host": parsed.hostname or "127.0.0.1",
+            "port": parsed.port or 3306,
+            "user": unquote(parsed.username or ""),
+            "password": unquote(parsed.password or ""),
+        }
+        database = parsed.path.lstrip("/")
+        if include_database and database:
+            config["database"] = unquote(database)
+        return config
+
+    config = {
+        "host": os.getenv("DB_HOST") or os.getenv("MYSQLHOST") or "127.0.0.1",
+        "port": int(os.getenv("DB_PORT") or os.getenv("MYSQLPORT") or "3306"),
+        "user": os.getenv("DB_USER") or os.getenv("MYSQLUSER") or "root",
+        "password": os.getenv("DB_PASSWORD") or os.getenv("MYSQLPASSWORD") or "1234",
+    }
+    database = os.getenv("DB_NAME") or os.getenv("MYSQLDATABASE") or "AI_interview_simulator"
+    if include_database:
+        config["database"] = database
+    return config
+
+
+def _database_name() -> str:
+    config = _database_config(include_database=True)
+    return str(config.get("database") or "AI_interview_simulator")
 
 
 class Database:
@@ -41,13 +71,7 @@ class Database:
 
 @contextmanager
 def get_db() -> Iterator[Database]:
-    conn = mysql.connector.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-    )
+    conn = mysql.connector.connect(**_database_config(include_database=True))
     db = Database(conn)
     try:
         yield db
@@ -57,19 +81,33 @@ def get_db() -> Iterator[Database]:
 
 
 def ensure_database_exists() -> None:
-    conn = mysql.connector.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-    )
-    cursor = conn.cursor()
-    cursor.execute(
-        f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` "
-        "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-    )
-    conn.commit()
-    conn.close()
+    config = _database_config(include_database=False)
+    try:
+        conn = mysql.connector.connect(**config)
+    except Error as exc:
+        try:
+            # Managed databases such as Railway may require connecting directly
+            # to the provisioned database and reject server-level connections.
+            test_conn = mysql.connector.connect(**_database_config(include_database=True))
+            test_conn.close()
+            return
+        except Error:
+            raise exc
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            f"CREATE DATABASE IF NOT EXISTS `{_database_name()}` "
+            "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+        )
+        conn.commit()
+    except Error as exc:
+        try:
+            test_conn = mysql.connector.connect(**_database_config(include_database=True))
+            test_conn.close()
+        except Error:
+            raise exc
+    finally:
+        conn.close()
 
 
 def init_db() -> None:

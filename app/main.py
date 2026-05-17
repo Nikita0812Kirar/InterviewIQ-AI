@@ -84,6 +84,11 @@ def index() -> str:
     return Path("static/index.html").read_text(encoding="utf-8")
 
 
+@app.get("/api/health")
+def health() -> dict:
+    return {"status": "ok"}
+
+
 @app.post("/api/auth/register")
 def register(payload: RegisterRequest) -> dict:
     with get_db() as db:
