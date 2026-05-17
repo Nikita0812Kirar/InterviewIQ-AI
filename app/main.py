@@ -4,11 +4,14 @@ import shutil
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
-from mysql.connector.errors import IntegrityError
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
+
+load_dotenv()
 
 if __package__ in {None, ""}:
     sys.path.append(str(Path(__file__).resolve().parents[1]))
