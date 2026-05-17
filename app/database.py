@@ -1,9 +1,22 @@
+# Fixed `app/database.py` for PostgreSQL + Supabase + Render
+
+```python
 import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text, create_engine, text
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    create_engine,
+    text,
+)
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session, declarative_base, relationship, sessionmaker
 
@@ -11,21 +24,20 @@ from sqlalchemy.orm import Session, declarative_base, relationship, sessionmaker
 UPLOAD_DIR = Path("uploads")
 
 
-def _build_database_url() -> str:
-    database_url = os.getenv("DATABASE_URL")
+# =========================
+# DATABASE CONFIG
+# =========================
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-    if not database_url:
-        raise ValueError("DATABASE_URL environment variable not set")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable not set")
 
-    return database_url
-
-
-DATABASE_URL = _build_database_url()
 
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
 )
+
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -33,9 +45,13 @@ SessionLocal = sessionmaker(
     bind=engine,
 )
 
+
 Base = declarative_base()
 
 
+# =========================
+# MODELS
+# =========================
 class User(Base):
     __tablename__ = "users"
 
@@ -121,6 +137,9 @@ class Report(Base):
     interview = relationship("Interview")
 
 
+# =========================
+# QUERY RESULT WRAPPER
+# =========================
 class QueryResult:
     def __init__(self, result: CursorResult[Any]):
         self.result = result
@@ -134,6 +153,9 @@ class QueryResult:
         return [dict(row) for row in self.result.mappings().fetchall()]
 
 
+# =========================
+# DATABASE SESSION
+# =========================
 class Database:
     def __init__(self, session: Session):
         self.session = session
@@ -163,6 +185,9 @@ def get_db() -> Iterator[Database]:
         session.close()
 
 
+# =========================
+# INITIALIZE DATABASE
+# =========================
 def init_db() -> None:
     UPLOAD_DIR.mkdir(exist_ok=True)
     Base.metadata.create_all(bind=engine)
