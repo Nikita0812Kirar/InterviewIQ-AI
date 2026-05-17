@@ -10,16 +10,18 @@ load_dotenv()
 
 st.set_page_config(page_title="InterviewIQ AI", page_icon="IQ", layout="wide")
 
+DEFAULT_API_URL = "https://interviewiq-ai-1-oaw1.onrender.com"
+
 
 def api_base_url() -> str:
     try:
         secret_url = st.secrets.get("FASTAPI_BASE_URL", "")
     except Exception:
         secret_url = ""
-    return (secret_url or os.getenv("FASTAPI_BASE_URL") or "http://127.0.0.1:8000").rstrip("/")
+    return (secret_url or os.getenv("FASTAPI_BASE_URL") or DEFAULT_API_URL).rstrip("/")
 
 
-API_BASE_URL = api_base_url()
+API_URL = api_base_url()
 
 
 def init_state() -> None:
@@ -33,7 +35,7 @@ def api_request(method: str, path: str, **kwargs: Any) -> Any:
     headers = kwargs.pop("headers", {})
     if st.session_state.token:
         headers["Authorization"] = f"Bearer {st.session_state.token}"
-    response = requests.request(method, f"{API_BASE_URL}{path}", headers=headers, timeout=60, **kwargs)
+    response = requests.request(method, f"{API_URL}{path}", headers=headers, timeout=60, **kwargs)
     if response.status_code >= 400:
         try:
             detail = response.json().get("detail", response.text)
@@ -155,7 +157,7 @@ def interview_view() -> None:
         try:
             data = api_request("POST", f"/api/interviews/{st.session_state.interview_id}/finish")
             st.success("Report generated.")
-            st.link_button("Open Report", f"{API_BASE_URL}{data['download_url']}?token={st.session_state.token}")
+            st.link_button("Open Report", f"{API_URL}{data['download_url']}?token={st.session_state.token}")
         except RuntimeError as exc:
             st.error(str(exc))
 

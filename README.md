@@ -20,8 +20,7 @@ python -m uvicorn app.main:app --reload
 python -m streamlit run streamlit_app.py
 ```
 
-For Streamlit deployment, set `FASTAPI_BASE_URL` to your deployed backend URL,
-for example your Railway web service URL.
+For Streamlit deployment, set `FASTAPI_BASE_URL` to your deployed backend URL.
 
 ## What is included
 
@@ -42,7 +41,7 @@ Copy `.env.example` to `.env` and fill in your local values:
 
 ```env
 OPENAI_API_KEY=your_key_here
-FASTAPI_BASE_URL=http://127.0.0.1:8000
+FASTAPI_BASE_URL=https://interviewiq-ai-1-oaw1.onrender.com
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
