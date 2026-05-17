@@ -11,6 +11,8 @@ load_dotenv()
 st.set_page_config(page_title="InterviewIQ AI", page_icon="IQ", layout="wide")
 
 DEFAULT_API_URL = "https://interviewiq-ai-1-oaw1.onrender.com"
+CONNECT_TIMEOUT = 10
+READ_TIMEOUT = 180
 
 
 def api_base_url() -> str:
@@ -35,7 +37,20 @@ def api_request(method: str, path: str, **kwargs: Any) -> Any:
     headers = kwargs.pop("headers", {})
     if st.session_state.token:
         headers["Authorization"] = f"Bearer {st.session_state.token}"
-    response = requests.request(method, f"{API_URL}{path}", headers=headers, timeout=60, **kwargs)
+    try:
+        response = requests.request(
+            method,
+            f"{API_URL}{path}",
+            headers=headers,
+            timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
+            **kwargs,
+        )
+    except requests.Timeout as exc:
+        raise RuntimeError(
+            "The backend is taking too long to respond. If it is hosted on Render, wait a minute for it to wake up and try again."
+        ) from exc
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Could not connect to the backend at {API_URL}.") from exc
     if response.status_code >= 400:
         try:
             detail = response.json().get("detail", response.text)
@@ -74,9 +89,12 @@ def login_view() -> None:
 def dashboard_view() -> None:
     st.subheader("Dashboard")
     try:
-        data = api_request("GET", "/api/analytics")
+        with st.spinner("Loading dashboard..."):
+            data = api_request("GET", "/api/analytics")
     except RuntimeError as exc:
         st.error(str(exc))
+        if st.button("Retry Dashboard"):
+            st.rerun()
         return
 
     col1, col2, col3 = st.columns(3)

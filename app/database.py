@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Iterator
 from urllib.parse import quote_plus
 
-from sqlalchemy import Column, Integer, String, create_engine, text
+from sqlalchemy import Column, DateTime, Integer, String, create_engine, text
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
@@ -48,9 +48,12 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    email = Column(String)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=False, unique=True)
+    password_hash = Column(String(255), nullable=False)
+    role = Column(String(50), nullable=False, server_default="candidate")
+    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
 
 
 class QueryResult:
