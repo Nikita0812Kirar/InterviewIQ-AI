@@ -21,8 +21,6 @@ The platform supports:
 - SQLAlchemy
 - PostgreSQL (Supabase)
 - OpenAI API (optional)
-- Gunicorn
-- Render (backend deployment)
 
 ---
 
@@ -79,42 +77,6 @@ python -m streamlit run streamlit_app.py
 
 ---
 
-# Production Deployment
-
-## Backend Deployment (Render)
-
-### Build Command
-
-```bash
-pip install -r requirements.txt
-```
-
-### Start Command
-
-```bash
-gunicorn -w 1 -k uvicorn.workers.UvicornWorker app.main:app
-```
-
----
-
-## Render Environment Variables
-
-Add these in Render Dashboard:
-
-```env
-OPENAI_API_KEY=your_openai_key
-
-FASTAPI_BASE_URL=https://your-backend-url.onrender.com
-
-DATABASE_URL=postgresql+psycopg2://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:5432/postgres?sslmode=require
-
-TOKEN_SECRET=replace-with-a-long-random-secret
-
-PORT=8000
-```
-
----
-
 # Frontend Deployment (Streamlit Cloud)
 
 Deploy `streamlit_app.py` on Streamlit Cloud.
@@ -128,7 +90,7 @@ streamlit_app.py
 In Streamlit secrets/config:
 
 ```env
-FASTAPI_BASE_URL=https://your-backend-url.onrender.com
+FASTAPI_BASE_URL=https://your-backend-url.example.com
 ```
 
 ---
@@ -253,14 +215,6 @@ git push origin main
 
 ---
 
-## Render Logs
-
-```txt
-Render Dashboard → Service → Logs
-```
-
----
-
 # Folder Structure
 
 ```txt
@@ -295,5 +249,3 @@ README.md
 ```
 
 in the PostgreSQL connection string.
-
-- Render free tier may sleep after inactivity and take 30–60 seconds to wake up.

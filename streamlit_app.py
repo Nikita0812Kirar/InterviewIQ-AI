@@ -10,7 +10,7 @@ load_dotenv()
 
 st.set_page_config(page_title="InterviewIQ AI", page_icon="IQ", layout="wide")
 
-DEFAULT_API_URL = "https://interviewiq-ai-1-oaw1.onrender.com"
+DEFAULT_API_URL = "http://127.0.0.1:8000"
 CONNECT_TIMEOUT = 10
 READ_TIMEOUT = 180
 
@@ -47,7 +47,7 @@ def api_request(method: str, path: str, **kwargs: Any) -> Any:
         )
     except requests.Timeout as exc:
         raise RuntimeError(
-            "The backend is taking too long to respond. If it is hosted on Render, wait a minute for it to wake up and try again."
+            "The backend is taking too long to respond. Check that the FastAPI server is running and try again."
         ) from exc
     except requests.RequestException as exc:
         raise RuntimeError(f"Could not connect to the backend at {API_URL}.") from exc
