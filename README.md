@@ -197,9 +197,15 @@ Includes:
 
 # Database
 
-The project uses PostgreSQL via Supabase.
+The project uses PostgreSQL via Supabase only.
 
-SQLAlchemy automatically creates tables during startup.
+Set `DATABASE_URL` to your Supabase PostgreSQL connection string:
+
+```env
+DATABASE_URL=postgresql+psycopg2://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres?sslmode=require
+```
+
+SQLAlchemy automatically creates the required tables during startup.
 
 No manual database creation is required.
 
@@ -274,8 +280,8 @@ README.md
 
 # Important Notes
 
-- Do NOT use local MySQL configuration on Render.
-- Always use `DATABASE_URL` for production deployment.
+- Use `DATABASE_URL` for local development and production deployment.
+- The database connection must be PostgreSQL/Supabase.
 - Supabase requires:
 
 ```txt

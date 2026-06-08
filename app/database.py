@@ -1,4 +1,4 @@
-# Fixed `app/database.py` for PostgreSQL + Supabase + Render
+# PostgreSQL + Supabase database configuration
 
 import os
 from contextlib import contextmanager
@@ -14,9 +14,10 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
-    text,
+    text as sql_text,
 )
 from sqlalchemy.engine import CursorResult
+from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, declarative_base, relationship, sessionmaker
 
 
@@ -30,6 +31,10 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable not set")
+
+database_url = make_url(DATABASE_URL)
+if database_url.get_backend_name() != "postgresql":
+    raise ValueError("DATABASE_URL must be a PostgreSQL/Supabase connection string")
 
 
 engine = create_engine(
@@ -59,7 +64,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     role = Column(String(50), nullable=False, default="candidate")
-    created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    created_at = Column(DateTime, server_default=sql_text("CURRENT_TIMESTAMP"))
 
 
 class Resume(Base):
@@ -74,7 +79,7 @@ class Resume(Base):
     experience = Column(Text, nullable=False)
     projects = Column(Text, nullable=False)
     certifications = Column(Text, nullable=False)
-    created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    created_at = Column(DateTime, server_default=sql_text("CURRENT_TIMESTAMP"))
 
     user = relationship("User")
 
@@ -91,7 +96,7 @@ class Interview(Base):
     status = Column(String(50), nullable=False, default="active")
     current_agent = Column(String(100), nullable=False, default="Technical Interviewer")
     overall_score = Column(Float, nullable=False, default=0)
-    created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    created_at = Column(DateTime, server_default=sql_text("CURRENT_TIMESTAMP"))
     completed_at = Column(DateTime, nullable=True)
 
     user = relationship("User")
@@ -106,7 +111,7 @@ class InterviewMessage(Base):
     agent = Column(String(100), nullable=False)
     content = Column(Text, nullable=False)
     score_json = Column(Text, nullable=True)
-    created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    created_at = Column(DateTime, server_default=sql_text("CURRENT_TIMESTAMP"))
 
     interview = relationship("Interview")
 
@@ -120,7 +125,7 @@ class CodingResult(Base):
     problem_title = Column(String(255), nullable=False)
     code = Column(Text, nullable=False)
     result_json = Column(Text, nullable=False)
-    created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    created_at = Column(DateTime, server_default=sql_text("CURRENT_TIMESTAMP"))
 
     user = relationship("User")
 
@@ -131,7 +136,7 @@ class Report(Base):
     id = Column(Integer, primary_key=True, index=True)
     interview_id = Column(Integer, ForeignKey("interviews.id"), nullable=False)
     report_html = Column(Text, nullable=False)
-    created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    created_at = Column(DateTime, server_default=sql_text("CURRENT_TIMESTAMP"))
 
     interview = relationship("Interview")
 
@@ -140,9 +145,9 @@ class Report(Base):
 # QUERY RESULT WRAPPER
 # =========================
 class QueryResult:
-    def __init__(self, result: CursorResult[Any]):
+    def __init__(self, result: CursorResult[Any], lastrowid: Any | None = None):
         self.result = result
-        self.lastrowid = result.lastrowid
+        self.lastrowid = lastrowid if lastrowid is not None else result.lastrowid
 
     def fetchone(self) -> dict[str, Any] | None:
         row = self.result.mappings().fetchone()
@@ -160,7 +165,17 @@ class Database:
         self.session = session
 
     def execute(self, sql: str, params: tuple[Any, ...] = ()):
-        result = self.session.connection().exec_driver_sql(sql, params)
+        connection = self.session.connection()
+        statement = sql.strip()
+
+        if connection.dialect.name == "postgresql":
+            statement = statement.replace("?", "%s")
+            if statement.lower().startswith("insert ") and " returning " not in statement.lower():
+                result = connection.exec_driver_sql(f"{statement} RETURNING id", params)
+                row = result.fetchone()
+                return QueryResult(result, row[0] if row else None)
+
+        result = connection.exec_driver_sql(statement, params)
         return QueryResult(result)
 
     def commit(self) -> None:

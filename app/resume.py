@@ -5,7 +5,7 @@ from pathlib import Path
 SKILL_KEYWORDS = [
     "python", "sql", "excel", "power bi", "tableau", "machine learning", "pandas",
     "numpy", "react", "fastapi", "flask", "java", "javascript", "aws", "docker",
-    "statistics", "nlp", "deep learning", "html", "css", "postgresql", "mysql"
+    "statistics", "nlp", "deep learning", "html", "css", "postgresql"
 ]
 
 

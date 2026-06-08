@@ -12,9 +12,10 @@ from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
 load_dotenv()
+BASE_DIR = Path(__file__).resolve().parents[1]
 
 if __package__ in {None, ""}:
-    sys.path.append(str(Path(__file__).resolve().parents[1]))
+    sys.path.insert(0, str(BASE_DIR))
     from app.ai_engine import opening_question, next_question, roadmap
     from app.auth import create_token, decode_token, hash_password, verify_password
     from app.coding import PROBLEMS, evaluate_code
@@ -33,7 +34,7 @@ else:
 
 
 app = FastAPI(title="AI Interview Simulator", version="1.0.0")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
 class RegisterRequest(BaseModel):
@@ -84,7 +85,7 @@ def current_user(authorization: str = Header(default=""), token: str = "") -> di
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> str:
-    return Path("static/index.html").read_text(encoding="utf-8")
+    return (BASE_DIR / "static" / "index.html").read_text(encoding="utf-8")
 
 
 @app.get("/api/health")
