@@ -93,6 +93,8 @@ In Streamlit secrets/config:
 FASTAPI_BASE_URL=https://your-backend-url.example.com
 ```
 
+For Streamlit Cloud, this must be a public URL where the FastAPI backend is running. Do not use `http://127.0.0.1:8000` in deployed Streamlit secrets.
+
 ---
 
 # Features

@@ -10,7 +10,6 @@ load_dotenv()
 
 st.set_page_config(page_title="InterviewIQ AI", page_icon="IQ", layout="wide")
 
-DEFAULT_API_URL = "http://127.0.0.1:8000"
 CONNECT_TIMEOUT = 10
 READ_TIMEOUT = 180
 
@@ -20,7 +19,7 @@ def api_base_url() -> str:
         secret_url = st.secrets.get("FASTAPI_BASE_URL", "")
     except Exception:
         secret_url = ""
-    return (secret_url or os.getenv("FASTAPI_BASE_URL") or DEFAULT_API_URL).rstrip("/")
+    return (secret_url or os.getenv("FASTAPI_BASE_URL") or "").rstrip("/")
 
 
 API_URL = api_base_url()
@@ -34,6 +33,10 @@ def init_state() -> None:
 
 
 def api_request(method: str, path: str, **kwargs: Any) -> Any:
+    if not API_URL:
+        raise RuntimeError(
+            "FASTAPI_BASE_URL is not configured. Set it to your deployed FastAPI backend URL in Streamlit secrets."
+        )
     headers = kwargs.pop("headers", {})
     if st.session_state.token:
         headers["Authorization"] = f"Bearer {st.session_state.token}"
