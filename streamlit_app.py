@@ -16,26 +16,50 @@ READ_TIMEOUT = 180
 
 def api_base_url() -> str:
     try:
-        secret_url = st.secrets.get("FASTAPI_BASE_URL", "")
+        secret_url = st.secrets.get("FASTAPI_BASE_URL", "") or st.secrets.get("API_BASE_URL", "")
     except Exception:
         secret_url = ""
-    return (secret_url or os.getenv("FASTAPI_BASE_URL") or "").rstrip("/")
+    return (secret_url or os.getenv("FASTAPI_BASE_URL") or os.getenv("API_BASE_URL") or "").rstrip("/")
 
 
 API_URL = api_base_url()
 
 
 def init_state() -> None:
+    st.session_state.setdefault("api_url", API_URL)
     st.session_state.setdefault("token", "")
     st.session_state.setdefault("user", None)
     st.session_state.setdefault("interview_id", None)
     st.session_state.setdefault("messages", [])
 
 
+def backend_url() -> str:
+    return st.session_state.get("api_url", "").rstrip("/")
+
+
+def backend_setup_view() -> None:
+    st.title("InterviewIQ AI")
+    st.warning("FastAPI backend URL is not configured.")
+    url = st.text_input(
+        "FastAPI backend URL",
+        placeholder="https://your-fastapi-backend.example.com",
+    ).strip()
+    if st.button("Save Backend URL", use_container_width=True):
+        if not url:
+            st.error("Enter your deployed FastAPI backend URL.")
+            return
+        if url.startswith("http://127.0.0.1") or url.startswith("http://localhost"):
+            st.error("Use a public backend URL for deployed Streamlit apps.")
+            return
+        st.session_state.api_url = url.rstrip("/")
+        st.rerun()
+
+
 def api_request(method: str, path: str, **kwargs: Any) -> Any:
-    if not API_URL:
+    api_url = backend_url()
+    if not api_url:
         raise RuntimeError(
-            "FASTAPI_BASE_URL is not configured. Set it to your deployed FastAPI backend URL in Streamlit secrets."
+            "FastAPI backend URL is not configured. Add FASTAPI_BASE_URL in Streamlit secrets or enter it in the app."
         )
     headers = kwargs.pop("headers", {})
     if st.session_state.token:
@@ -43,7 +67,7 @@ def api_request(method: str, path: str, **kwargs: Any) -> Any:
     try:
         response = requests.request(
             method,
-            f"{API_URL}{path}",
+            f"{api_url}{path}",
             headers=headers,
             timeout=(CONNECT_TIMEOUT, READ_TIMEOUT),
             **kwargs,
@@ -53,7 +77,7 @@ def api_request(method: str, path: str, **kwargs: Any) -> Any:
             "The backend is taking too long to respond. Check that the FastAPI server is running and try again."
         ) from exc
     except requests.RequestException as exc:
-        raise RuntimeError(f"Could not connect to the backend at {API_URL}.") from exc
+        raise RuntimeError(f"Could not connect to the backend at {api_url}.") from exc
     if response.status_code >= 400:
         try:
             detail = response.json().get("detail", response.text)
@@ -178,7 +202,7 @@ def interview_view() -> None:
         try:
             data = api_request("POST", f"/api/interviews/{st.session_state.interview_id}/finish")
             st.success("Report generated.")
-            st.link_button("Open Report", f"{API_URL}{data['download_url']}?token={st.session_state.token}")
+            st.link_button("Open Report", f"{backend_url()}{data['download_url']}?token={st.session_state.token}")
         except RuntimeError as exc:
             st.error(str(exc))
 
@@ -244,6 +268,10 @@ def reports_view() -> None:
 
 def main() -> None:
     init_state()
+    if not backend_url():
+        backend_setup_view()
+        return
+
     if not st.session_state.token:
         login_view()
         return
