@@ -119,6 +119,12 @@ PORT=8000
 
 Deploy `streamlit_app.py` on Streamlit Cloud.
 
+Set the Streamlit Cloud main file path to:
+
+```txt
+streamlit_app.py
+```
+
 In Streamlit secrets/config:
 
 ```env

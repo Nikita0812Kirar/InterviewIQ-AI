@@ -15,14 +15,14 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parents[1]
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(BASE_DIR))
-    from app.ai_engine import opening_question, next_question, roadmap
-    from app.auth import create_token, decode_token, hash_password, verify_password
-    from app.coding import PROBLEMS, evaluate_code
-    from app.database import UPLOAD_DIR, get_db, init_db
-    from app.jobs import fetch_live_jobs, suggested_job_query
-    from app.reports import build_report
-    from app.resume import analyze_resume, extract_text
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from ai_engine import opening_question, next_question, roadmap
+    from auth import create_token, decode_token, hash_password, verify_password
+    from coding import PROBLEMS, evaluate_code
+    from database import UPLOAD_DIR, get_db, init_db
+    from jobs import fetch_live_jobs, suggested_job_query
+    from reports import build_report
+    from resume import analyze_resume, extract_text
 else:
     from .ai_engine import opening_question, next_question, roadmap
     from .auth import create_token, decode_token, hash_password, verify_password
